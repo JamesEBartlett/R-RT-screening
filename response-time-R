@@ -1,58 +1,31 @@
-#Packages 
+#Load packages 
 library(tidyverse)
 
-#Read in file 
-data1<- read.csv("", #enter file name within the dashes
+#Read in example file 
+data1<- read.csv("RT-screening-sample.csv", 
                  header=TRUE, stringsAsFactors = FALSE)
 
 #Select only correct responses 
 correct_data <- filter(data1, 
-                       key_resp2.corr_raw == TRUE) #select only correct responses 
+                       Correct_response == TRUE)
 
-#Select values within 200ms-2000ms 
-extreme_data <- filter(correct_data, 
-                       key_resp2.rt_mean > 0.200 & key_resp2.rt_mean < 2.000) #select responses within 200ms and 2000ms
-
-#Calculate extreme values
-mean <- mean(extreme_data$key_resp2.rt_mean)
-SD <- sd(extreme_data$key_resp2.rt_mean)
-cutoff <- mean + (3*SD)
-final_data <- filter(extreme_data, 
-                     key_resp2.rt_mean < cutoff) #select only responses below 3 SDs above the mean
+#Remove extreme values to leave the final data for analysis
+final_data <- correct_data %>%
+  filter(RT > 0.200 & RT < 2.00) %>% #first set of boundaries 
+  mutate(cutoff = mean(RT) + 3*sd(RT)) %>% #create a cutoff for 3 SDs above the mean 
+  filter(RT < cutoff) %>% #remove extreme values above 3 SDs of the mean
+           select(-cutoff) #remove the cutoff column to tidy the table up 
 
 #Save analysis ready version of data 
-write.csv(final_data, #final data table 
-          file = "_Analysis.csv") #fill in the blank for what you want your csv to be called 
+write.csv(final_data, #final analysis ready table 
+          file = "Sample_Analysis.csv") #file name to be saved as in your WD 
 
-#Mean and SD for each factor and level 
-NS200 <- filter(final_data, 
-                Trial == "NS" & SOA == 11) 
-NS200M <- mean(NS200$key_resp2.rt_mean)
-
-NS500 <- filter(final_data, 
-                Trial == "NS" & SOA == 27) 
-NS500M <- mean(NS500$key_resp2.rt_mean)
-
-NS2000 <- filter(final_data, 
-                Trial == "NS" & SOA == 106) 
-NS2000M <- mean(NS2000$key_resp2.rt_mean)
-
-SN200 <- filter(final_data, 
-                Trial == "SN" & SOA == 11) 
-SN200M <- mean(SN200$key_resp2.rt_mean)
-
-SN500 <- filter(final_data, 
-                Trial == "SN" & SOA == 27) 
-SN500M <- mean(SN500$key_resp2.rt_mean)
-
-SN2000 <- filter(final_data, 
-                Trial == "SN" & SOA == 106) 
-SN2000M <- mean(SN2000$key_resp2.rt_mean)
-
-#Collect all this togegther in a table
-AB_data <- tibble("Trial" = c("NS200", "NS500", "NS2000", "SN200", "SN500", "SN2000"),
-                 "Mean RT" = c(NS200M, NS500M, NS2000M, SN200M, SN500M, SN2000M))
-
-#save as RT data table 
-write.csv(AB_data, #final analysis ready table 
-          file = "_RTs.csv") #fill in the blank 
+#Get the mean RT data for each condition after combining the two condition columns
+AB_data <- final_data %>% 
+  mutate(Condition = paste0(Trial, SOA)) %>% #combine the two elements into separate conditions
+  group_by(Condition) %>% #group the analysis to get separate means for each condition 
+  summarise(MeanRT = mean(RT)) #get the mean RT for each condition 
+             
+#save as RT data for future reference 
+write.csv(AB_data, #final data
+          file = "Sample_AB-RTs.csv") #file name to be saved as in your WD 
