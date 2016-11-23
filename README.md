@@ -1,1 +1,1 @@
-Here is a collection of code to be used on my blog site. 
+Here is a collection of R files and sample data that can be used with the Statistics and Substance Use blog posts. 
