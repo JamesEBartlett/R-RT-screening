@@ -1,1 +1,1 @@
-Here is a collection of R files and sample data that can be used with the Statistics and Substance Use blog posts. 
+This is the example data set and R script that can be used with the Tidying and Analysing Response Time Data using R blog post. 
